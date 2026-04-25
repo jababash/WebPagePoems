@@ -96,6 +96,30 @@ body {
 }
 
 /* ============================================================
+   SHARED BANNER
+   ============================================================ */
+.shared-banner {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 300;
+  color: var(--color-ink-muted);
+  text-align: center;
+  margin-bottom: var(--space-lg);
+  animation: var(--fade-in);
+}
+
+.shared-banner-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--transition-base);
+}
+
+.shared-banner-link:hover {
+  border-bottom-color: var(--color-accent);
+}
+
+/* ============================================================
    POEM STAGE
    ============================================================ */
 .poem-stage {

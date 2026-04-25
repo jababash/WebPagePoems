@@ -3,6 +3,8 @@
 const STORAGE_KEY_PREFIX = 'potd_';
 const API_BATCH_URL      = 'https://poetrydb.org/random/5';
 
+let isSharedPoem = false;
+
 /* ============================================================
    DATE HELPERS
    ============================================================ */
@@ -88,7 +90,7 @@ function renderPoem(poem) {
   hideElement('js-loading');
   hideElement('js-error');
   showElement('js-poem-card');
-  startCountdown();
+  if (!isSharedPoem) startCountdown();
 }
 
 /* ============================================================
@@ -122,26 +124,59 @@ function startCountdown() {
 }
 
 /* ============================================================
-   SHARE
+   SHARE — encode poem into URL so recipients see the same poem
    ============================================================ */
+
+function encodePoemForUrl(poem) {
+  const json = JSON.stringify({ title: poem.title, author: poem.author, lines: poem.lines });
+  return btoa(unescape(encodeURIComponent(json)));
+}
+
+function decodePoemFromUrl(encoded) {
+  try {
+    return JSON.parse(decodeURIComponent(escape(atob(encoded))));
+  } catch {
+    return null;
+  }
+}
+
+function getSharedPoem() {
+  const params = new URLSearchParams(window.location.search);
+  const encoded = params.get('p');
+  if (!encoded) return null;
+  return decodePoemFromUrl(encoded);
+}
+
+function buildPoemShareUrl(poem) {
+  const url = new URL(window.location.href);
+  url.search = '';
+  url.hash = '';
+  url.searchParams.set('p', encodePoemForUrl(poem));
+  return url.toString();
+}
+
+function showSharedBanner() {
+  document.getElementById('js-shared-banner').classList.remove('hidden');
+  document.querySelector('.tomorrow-notice').classList.add('hidden');
+}
 
 function sharePoem() {
   const title  = document.getElementById('js-title').textContent;
   const author = document.getElementById('js-author').textContent;
-  const body   = document.getElementById('js-body').textContent;
+  const lines  = document.getElementById('js-body').textContent.split('\n');
 
-  const shareText = `${title}\nby ${author}\n\n${body}`;
+  const shareUrl  = buildPoemShareUrl({ title, author, lines });
   const shareData = {
     title: `Poem of the Day: ${title}`,
-    text:  shareText,
-    url:   window.location.href,
+    text:  `${title}\nby ${author}`,
+    url:   shareUrl,
   };
 
   if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
     navigator.share(shareData).catch(() => {});
   } else {
-    navigator.clipboard.writeText(shareText)
-      .then(() => showToast('Copied to clipboard'))
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => showToast('Link copied to clipboard'))
       .catch(() => showToast('Could not copy — try selecting the text manually'));
   }
 }
@@ -183,6 +218,14 @@ async function loadPoem() {
   const dateStr = key.replace(STORAGE_KEY_PREFIX, '');
 
   renderDate(dateStr);
+
+  const sharedPoem = getSharedPoem();
+  if (sharedPoem) {
+    isSharedPoem = true;
+    renderPoem(sharedPoem);
+    showSharedBanner();
+    return;
+  }
 
   let cachedPoem = null;
   try {
