@@ -128,13 +128,18 @@ function startCountdown() {
    ============================================================ */
 
 function encodePoemForUrl(poem) {
-  const json = JSON.stringify({ title: poem.title, author: poem.author, lines: poem.lines });
-  return btoa(unescape(encodeURIComponent(json)));
+  const compact = [poem.title, poem.author, ...poem.lines].join('\n');
+  return btoa(unescape(encodeURIComponent(compact)));
 }
 
 function decodePoemFromUrl(encoded) {
   try {
-    return JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    const str = decodeURIComponent(escape(atob(encoded)));
+    if (str.startsWith('{')) {
+      return JSON.parse(str);
+    }
+    const parts = str.split('\n');
+    return { title: parts[0], author: parts[1], lines: parts.slice(2) };
   } catch {
     return null;
   }
