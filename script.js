@@ -2,6 +2,7 @@
 
 const STORAGE_KEY_PREFIX = 'potd_';
 const API_BATCH_URL      = 'https://poetrydb.org/random/5';
+const API_LOOKUP_URL     = 'https://poetrydb.org/title,author';
 
 let isSharedPoem = false;
 
@@ -128,28 +129,46 @@ function startCountdown() {
    ============================================================ */
 
 function encodePoemForUrl(poem) {
-  const compact = [poem.title, poem.author, ...poem.lines].join('\n');
+  const compact = [poem.title, poem.author].join('\n');
   return btoa(unescape(encodeURIComponent(compact)));
 }
 
-function decodePoemFromUrl(encoded) {
+function _decodeUrlPayload(encoded) {
   try {
     const str = decodeURIComponent(escape(atob(encoded)));
     if (str.startsWith('{')) {
-      return JSON.parse(str);
+      return { poem: JSON.parse(str), isShortFormat: false };
     }
     const parts = str.split('\n');
-    return { title: parts[0], author: parts[1], lines: parts.slice(2) };
+    if (parts.length >= 3) {
+      return { poem: { title: parts[0], author: parts[1], lines: parts.slice(2) }, isShortFormat: false };
+    }
+    return { poem: null, title: parts[0] || '', author: parts[1] || '', isShortFormat: true };
   } catch {
     return null;
   }
 }
 
-function getSharedPoem() {
+async function getSharedPoem() {
   const params = new URLSearchParams(window.location.search);
   const encoded = params.get('p');
   if (!encoded) return null;
-  return decodePoemFromUrl(encoded);
+
+  const decoded = _decodeUrlPayload(encoded);
+  if (!decoded) return null;
+  if (!decoded.isShortFormat) return decoded.poem;
+
+  const segment = encodeURIComponent(decoded.title) + ';' + encodeURIComponent(decoded.author);
+  try {
+    const response = await fetch(`${API_LOOKUP_URL}/${segment}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const results = await response.json();
+    if (!Array.isArray(results) || results.length === 0) throw new Error('Not found');
+    return results[0];
+  } catch (err) {
+    console.error('getSharedPoem fetch error:', err);
+    return null;
+  }
 }
 
 function buildPoemShareUrl(poem) {
@@ -224,11 +243,18 @@ async function loadPoem() {
 
   renderDate(dateStr);
 
-  const sharedPoem = getSharedPoem();
-  if (sharedPoem) {
-    isSharedPoem = true;
-    renderPoem(sharedPoem);
-    showSharedBanner();
+  const urlParam = new URLSearchParams(window.location.search).get('p');
+  if (urlParam) {
+    showLoading(true);
+    const sharedPoem = await getSharedPoem();
+    if (sharedPoem) {
+      isSharedPoem = true;
+      renderPoem(sharedPoem);
+      showSharedBanner();
+    } else {
+      showLoading(false);
+      showError(true);
+    }
     return;
   }
 
