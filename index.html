@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A new poem every day, curated from the public domain." />
+  <title>Poem of the Day</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page-wrapper">
+
+    <header class="site-header">
+      <p class="site-label">Poem of the Day</p>
+      <p class="site-date" id="js-date"></p>
+    </header>
+
+    <main class="poem-stage" id="js-poem-stage">
+
+      <div class="poem-loading" id="js-loading" aria-live="polite">
+        <span class="loading-dot"></span>
+        <span class="loading-dot"></span>
+        <span class="loading-dot"></span>
+      </div>
+
+      <div class="poem-error hidden" id="js-error" role="alert">
+        <p>Could not load today's poem.</p>
+        <button class="retry-btn" id="js-retry">Try again</button>
+      </div>
+
+      <article class="poem-card hidden" id="js-poem-card">
+        <h1 class="poem-title" id="js-title"></h1>
+        <p class="poem-author" id="js-author"></p>
+        <div class="poem-divider" aria-hidden="true"></div>
+        <pre class="poem-body" id="js-body"></pre>
+      </article>
+
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-actions">
+        <button class="share-btn" id="js-share" aria-label="Share this poem">
+          <svg class="share-icon" width="14" height="14" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round"
+               aria-hidden="true">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+            <polyline points="16 6 12 2 8 6"/>
+            <line x1="12" y1="2" x2="12" y2="15"/>
+          </svg>
+          Share
+        </button>
+      </div>
+      <p class="tomorrow-notice">
+        New poem in <span class="countdown" id="js-countdown">--:--:--</span>
+      </p>
+    </footer>
+
+  </div>
+
+  <div class="toast hidden" id="js-toast" role="status" aria-live="polite">
+    Copied to clipboard
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
